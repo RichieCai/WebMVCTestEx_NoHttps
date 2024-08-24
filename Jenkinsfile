@@ -14,7 +14,7 @@ pipeline {
             steps {
                 script {
                     echo "Building Docker Image: ${DOCKER_IMAGE}"
-                    docker.build("${DOCKER_IMAGE}")
+                    docker.build("${DOCKER_IMAGE}",WebMVCTestEx_NoHttps)
                 }
             }
         }
