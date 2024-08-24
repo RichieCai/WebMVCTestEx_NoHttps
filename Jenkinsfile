@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_IMAGE = "webmvctestEx_nohttps:${BUILD_NUMBER}"
+        DOCKER_IMAGE = "webmvctestex_nohttps:${BUILD_NUMBER}"
         REPO_URL = "https://github.com/RichieCai/WebMVCTestEx_NoHttps.git"
     }
     stages {
