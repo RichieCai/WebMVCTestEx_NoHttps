@@ -1,19 +1,31 @@
 pipeline {
     agent any
+    environment {
+        DOCKER_REGISTRY = "" // 本地Docker Registry（如果有）
+        DOCKER_IMAGE = "webmvctestEx_nohttps:${BUILD_NUMBER}"
+        REPO_URL = "https://github.com/RichieCai/WebMVCTestEx_NoHttps.git"
+    }
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/RichieCai/WebMVCTestEx_NoHttps.git'
+                git branch: 'main', url: "${REPO_URL}"
             }
         }
         stage('Build') {
             steps {
-                sh 'dotnet build'
+                script {
+					echo "Building Docker Image: ${DOCKER_IMAGE}"
+                    docker.build("${DOCKER_IMAGE}")
+                }
             }
         }
         stage('Test') {
             steps {
-                sh 'dotnet test'
+                script {
+                    docker.image("${DOCKER_IMAGE}").inside {
+                        sh 'dotnet test'
+                    }
+				}
             }
         }
         stage('Docker Build') {
@@ -23,26 +35,23 @@ pipeline {
                 }
             }
         }
-        stage('Docker Push') {
-            steps {
-                script {
-						// 使用當前項目目錄下的 Dockerfile 構建 Docker 映像
-						def dockerImage = docker.build("webmvctestex_nohttps:latest")
-                    }
-                }
-            }
-        }
         stage('Deploy') {
             steps {
                 script {
-                    // 刪除已有的容器，避免名稱衝突
-                    sh 'docker rm -f webmvctestex_nohttps-container || true'
-                    
-                    // 運行新構建的 Docker 映像
-                    sh 'docker run -d -p 5300:80 --name yourproject-container webmvctestex_nohttps:latest'
-                    }
+                    docker.image("${DOCKER_IMAGE}").run('-d -p 8080:80')
                 }
             }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed.'
         }
     }
 }
