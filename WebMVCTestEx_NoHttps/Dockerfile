@@ -7,7 +7,7 @@ EXPOSE 80
 FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["WebMVCTestEx_NoHttps/WebMVCTestEx_NoHttps.csproj", "WebMVCTestEx_NoHttps/"]
+COPY ["WebMVCTestEx_NoHttps/WebMVCTestEx_NoHttps/WebMVCTestEx_NoHttps.csproj", "WebMVCTestEx_NoHttps/"]
 RUN dotnet restore "./WebMVCTestEx_NoHttps/WebMVCTestEx_NoHttps.csproj"
 COPY . .
 WORKDIR "/src/WebMVCTestEx_NoHttps"
