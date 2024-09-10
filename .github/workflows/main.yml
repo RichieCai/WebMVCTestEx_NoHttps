@@ -1,35 +1,28 @@
 name: Deploy .NET 6 Web App to Azure
-
 on:
   push:
     branches:
       - main
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v2
 
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 6.0.x
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
-    - name: Restore dependencies
-      run: dotnet restore
+    - name: Build Docker Image
+      run: docker build -t your-dockerhub-username/mywebapi:${{ github.sha }} .
 
-    - name: Build the project
-      run: dotnet build --configuration Release --no-restore
+    - name: Push Docker Image to Docker Hub
+      run: docker push your-dockerhub-username/mywebapi:${{ github.sha }}
 
-    - name: Publish the project
-      run: dotnet publish -c Release -o ./publish_output --no-restore
-
-    - name: 'Deploy to Azure Web App'
+    - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+        app-name: <your-webapp-name>
         publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        package: ./publish_output
+        images: 'your-dockerhub-username/mywebapi:${{ github.sha }}'
