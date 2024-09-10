@@ -1,28 +1,40 @@
-name: Deploy .NET 6 Web App to Azure
+name: Build and Deploy to Azure Web App
+
 on:
   push:
     branches:
-      - main
+      - main  # 在推送到 main 分支時觸發
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }} # 在 GitHub secrets 中配置
 
-    - name: Build Docker Image
-      run: docker build -t your-dockerhub-username/mywebapi:${{ github.sha }} .
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
 
-    - name: Push Docker Image to Docker Hub
-      run: docker push your-dockerhub-username/mywebapi:${{ github.sha }}
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ secrets.ACR_LOGIN_SERVER }}/yourwebapi:latest  # 推送到 ACR 的鏡像標籤
+
+    - name: Azure Container Registry login
+      run: |
+        echo ${{ secrets.ACR_PASSWORD }} | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
 
     - name: Deploy to Azure Web App
       uses: azure/webapps-deploy@v2
       with:
-        app-name: <your-webapp-name>
-        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-        images: 'your-dockerhub-username/mywebapi:${{ github.sha }}'
+        app-name: "YourAppServiceName"  # Web App 名稱
+        images: "${{ secrets.ACR_LOGIN_SERVER }}/yourwebapi:latest"
