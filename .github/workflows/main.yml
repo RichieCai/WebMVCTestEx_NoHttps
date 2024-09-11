@@ -1,0 +1,40 @@
+name: Build and Deploy to Azure Web App
+
+on:
+  push:
+    branches:
+      - main  # 在推送到 main 分支時觸發
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Log in to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }} # 在 GitHub secrets 中配置
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        push: true
+        tags: ${{ secrets.ACR_LOGIN_SERVER }}/yourwebapi:latest  # 推送到 ACR 的鏡像標籤
+
+    - name: Azure Container Registry login
+      run: |
+        echo ${{ secrets.ACR_PASSWORD }} | docker login ${{ secrets.ACR_LOGIN_SERVER }} -u ${{ secrets.ACR_USERNAME }} --password-stdin
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: "YourAppServiceName"  # Web App 名稱
+        images: "${{ secrets.ACR_LOGIN_SERVER }}/webtestnohttpacr.azurecr.io/webmvctestex_nohttps:last"
