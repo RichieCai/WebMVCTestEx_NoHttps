@@ -37,4 +37,4 @@ jobs:
       uses: azure/webapps-deploy@v2
       with:
         app-name: "YourAppServiceName"  # Web App 名稱
-        images: "${{ secrets.ACR_LOGIN_SERVER }}/yourwebapi:latest"
+        images: "${{ secrets.ACR_LOGIN_SERVER }}/webtestnohttpacr.azurecr.io/webmvctestex_nohttps:last"
