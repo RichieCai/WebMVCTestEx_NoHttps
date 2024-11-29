@@ -3,48 +3,43 @@ pipeline {
     environment {
         DOCKER_IMAGE = "webmvctestex_nohttps:${BUILD_NUMBER}"
         REPO_URL = "https://github.com/RichieCai/WebMVCTestEx_NoHttps.git"
-    }
+		DONTNET_CLI_HOME="C:\\Program Files\\dotnet"
+    }t
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: "${REPO_URL}"
+                checkout scm
             }
         }
         stage('Build') {
             steps {
                 script {
-                    echo "Building Docker Image: ${DOCKER_IMAGE}"
-                    docker.build("${DOCKER_IMAGE}","WebMVCTestEx_NoHttps")
+				    // but "cd"
+                    bat "dotnet restore"
+					
+					//Build the application
+					bat "dotnet build --configuration Release"
                 }
             }
         }
         stage('Test') {
             steps {
                 script {
-                    docker.image("${DOCKER_IMAGE}").inside {
-                        sh 'dotnet test'
-                    }
+                    bat "dotnet test --no-restore --configuration Release"
                 }
             }
         }
-        stage('Deploy') {
+        stage('Pulish') {
             steps {
                 script {
-                    echo "Deploying Docker Image: ${DOCKER_IMAGE}"
-                    docker.image("${DOCKER_IMAGE}").run('-d -p 8080:80')
+                    bat "dotnet publish --no-restore --configuration Release --output .\\publish"
                 }
             }
         }
     }
     post {
-        always {
-            cleanWs()
-        }
         success {
-            echo 'Deployment successful!'
-        }
-        failure {
-            echo 'Deployment failed.'
+            echo 'build,test,and publish successful!'
         }
     }
 }
